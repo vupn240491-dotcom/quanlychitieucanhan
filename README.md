@@ -27,7 +27,3 @@
 3. Chạy `dotnet ef database update`
 4. Chạy `dotnet run`
 5. Truy cập `http://localhost:5276`
-
-## Tác giả
-
-Nguyễn Nhựt Lâm - 07/09/2025
