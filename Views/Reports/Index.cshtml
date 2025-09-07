@@ -1,0 +1,202 @@
+@model ExpenseTracker.Models.ViewModels.ReportsViewModel
+@{
+    ViewData["Title"] = "Báo cáo chi tiêu";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl shadow-xl text-white p-8">
+        <h1 class="text-3xl font-bold mb-2">Báo cáo chi tiêu</h1>
+        <p class="text-purple-100 text-lg">Phân tích chi tiết về thói quen chi tiêu của bạn</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Chi tiêu tháng @Model.CurrentMonth</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.TotalThisMonth.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                    @if (Model.MonthlyChange != 0)
+                    {
+                        <p class="text-sm @(Model.MonthlyChange > 0 ? "text-red-600" : "text-green-600")">
+                            @(Model.MonthlyChange > 0 ? "+" : "")@Model.MonthlyChange.ToString("F1")% so với tháng trước
+                        </p>
+                    }
+                </div>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <span class="text-2xl">📊</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Tổng chi tiêu năm @Model.CurrentYear</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.TotalThisYear.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <span class="text-2xl">📈</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Trung bình/tháng</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.AveragePerMonth.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <span class="text-2xl">💰</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Số danh mục</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.CategoryExpenses.Count</p>
+                </div>
+                <div class="p-3 bg-orange-100 rounded-lg">
+                    <span class="text-2xl">🎯</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Monthly Trend -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Xu hướng chi tiêu năm @Model.CurrentYear</h3>
+            <canvas id="monthlyTrendChart" width="400" height="200"></canvas>
+        </div>
+
+        <!-- Category Distribution -->
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Phân bố theo danh mục (tháng này)</h3>
+            <canvas id="categoryDistributionChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Category Analysis -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Phân tích theo danh mục</h3>
+        <div class="space-y-4">
+            @foreach (var category in Model.CategoryExpenses)
+            {
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 rounded-lg flex items-center justify-center text-white" 
+                                 style="background-color: @category.CategoryColor;">
+                                @category.CategoryIcon
+                            </div>
+                            <div>
+                                <h4 class="font-medium text-gray-900">@category.CategoryName</h4>
+                                <p class="text-sm text-gray-600">@category.Count giao dịch</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-lg font-semibold text-gray-900">@category.Amount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                            @if (category.Budget.HasValue)
+                            {
+                                <p class="text-sm text-gray-600">
+                                    Ngân sách: @category.Budget.Value.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))
+                                </p>
+                            }
+                        </div>
+                    </div>
+                    
+                    @if (category.Budget.HasValue && category.Budget > 0)
+                    {
+                        <div class="mt-2">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Sử dụng ngân sách</span>
+                                <span>@category.BudgetUsagePercentage.ToString("F1")%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="h-2 rounded-full @(category.BudgetUsagePercentage > 100 ? "bg-red-500" : category.BudgetUsagePercentage > 80 ? "bg-yellow-500" : "bg-green-500")" 
+                                     style="width: @Math.Min(category.BudgetUsagePercentage, 100)%"></div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Top Expenses -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Chi tiêu lớn nhất tháng này</h3>
+        <div class="space-y-3">
+            @foreach (var expense in Model.TopExpenses)
+            {
+                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm" 
+                             style="background-color: @expense.CategoryColor;">
+                            @expense.CategoryIcon
+                        </div>
+                        <div>
+                            <p class="font-medium text-gray-900">@expense.Title</p>
+                            <p class="text-sm text-gray-600">@expense.CategoryName • @expense.Date.ToString("dd/MM/yyyy")</p>
+                        </div>
+                    </div>
+                    <p class="text-lg font-semibold text-gray-900">@expense.Amount.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly trend chart
+    const monthlyTrendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+    new Chart(monthlyTrendCtx, {
+        type: 'bar',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.MonthlyExpenses.Select(m => m.Month))),
+            datasets: [{
+                label: 'Chi tiêu (VNĐ)',
+                data: @Html.Raw(Json.Serialize(Model.MonthlyExpenses.Select(m => m.Amount))),
+                backgroundColor: 'rgba(147, 51, 234, 0.8)',
+                borderColor: 'rgba(147, 51, 234, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Category distribution chart
+    const categoryDistributionCtx = document.getElementById('categoryDistributionChart').getContext('2d');
+    new Chart(categoryDistributionCtx, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.CategoryExpenses.Select(c => c.CategoryName))),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.CategoryExpenses.Select(c => c.Amount))),
+                backgroundColor: @Html.Raw(Json.Serialize(Model.CategoryExpenses.Select(c => c.CategoryColor)))
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+</script>

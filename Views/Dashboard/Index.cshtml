@@ -1,0 +1,192 @@
+@model ExpenseTracker.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl shadow-xl text-white p-8">
+        <h1 class="text-3xl font-bold mb-2">Trang chủ</h1>
+        <p class="text-blue-100 text-lg">Tổng quan chi tiêu của bạn</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Tổng chi tiêu tháng</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.TotalExpenses.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                    @if (Model.WeeklyChange != 0)
+                    {
+                        <p class="text-sm @(Model.WeeklyChange > 0 ? "text-red-600" : "text-green-600")">
+                            @(Model.WeeklyChange > 0 ? "+" : "")@Model.WeeklyChange.ToString("F1")% so với tuần trước
+                        </p>
+                    }
+                </div>
+                <div class="p-3 bg-blue-100 rounded-lg">
+                    <span class="text-2xl">💰</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Số giao dịch</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.TransactionCount</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-lg">
+                    <span class="text-2xl">💳</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Danh mục sử dụng</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.CategoryCount</p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-lg">
+                    <span class="text-2xl">🎯</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Trung bình/ngày</p>
+                    <p class="text-2xl font-bold text-gray-900">@Model.DailyAverage.ToString("C0", new System.Globalization.CultureInfo("vi-VN"))</p>
+                </div>
+                <div class="p-3 bg-orange-100 rounded-lg">
+                    <span class="text-2xl">📈</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Insights -->
+    <div class="bg-gradient-to-r from-amber-50 to-orange-50 border border-orange-200 rounded-xl p-6">
+        <div class="flex items-start space-x-3">
+            <div class="p-2 bg-orange-100 rounded-lg">
+                <span class="text-orange-600">⚠️</span>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-orange-800 mb-1">Thông tin chi tiêu</h3>
+                <p class="text-orange-700">
+                    @if (!string.IsNullOrEmpty(Model.TopCategory))
+                    {
+                        <text>Bạn chi tiêu nhiều nhất cho "@Model.TopCategory" trong tháng này</text>
+                    }
+                    else
+                    {
+                        <text>Bắt đầu ghi chép chi tiêu để xem thống kê chi tiết</text>
+                    }
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Xu hướng chi tiêu trong tháng</h3>
+            <canvas id="monthlyChart" width="400" height="200"></canvas>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Phân bố theo danh mục</h3>
+            <canvas id="categoryChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Hành động nhanh</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <a href="@Url.Action("Index", "Expenses")" 
+               class="block p-4 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg transition-colors group">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-blue-500 text-white rounded-lg group-hover:bg-blue-600 transition-colors">
+                        <span>💳</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900">Thêm chi tiêu</h4>
+                        <p class="text-sm text-gray-600">Ghi chép giao dịch mới</p>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="@Url.Action("Index", "Categories")" 
+               class="block p-4 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition-colors group">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-green-500 text-white rounded-lg group-hover:bg-green-600 transition-colors">
+                        <span>🎯</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900">Quản lý danh mục</h4>
+                        <p class="text-sm text-gray-600">Thêm hoặc chỉnh sửa danh mục</p>
+                    </div>
+                </div>
+            </a>
+            
+            <a href="@Url.Action("Index", "Reports")" 
+               class="block p-4 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg transition-colors group">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-purple-500 text-white rounded-lg group-hover:bg-purple-600 transition-colors">
+                        <span>📊</span>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900">Xem báo cáo</h4>
+                        <p class="text-sm text-gray-600">Phân tích chi tiết</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Monthly spending chart
+    const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+    new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.MonthlySpending.Select(m => m.Date))),
+            datasets: [{
+                label: 'Chi tiêu (VNĐ)',
+                data: @Html.Raw(Json.Serialize(Model.MonthlySpending.Select(m => m.Amount))),
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Category distribution chart
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: @Html.Raw(Json.Serialize(Model.CategoryDistribution.Select(c => c.Name))),
+            datasets: [{
+                data: @Html.Raw(Json.Serialize(Model.CategoryDistribution.Select(c => c.Value))),
+                backgroundColor: @Html.Raw(Json.Serialize(Model.CategoryDistribution.Select(c => c.Color)))
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+</script>
